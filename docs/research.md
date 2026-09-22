@@ -3,30 +3,57 @@
 Reviewed 2026-09-22. The project is framed around the standalone ACP server,
 not a particular editor or a general-purpose rewrite of Antigravity.
 
-## Recommended direction: practical compatibility toolkit
+## Adopted position: compatibility strategy with reference tooling
 
-Lead with the problem and an executable recipe: run the official standalone
-ACP distribution on tested Linux x86-64 hardware without AVX. Provide the
-full-QEMU baseline, the native-frontend optimization, a pinned manifest and
-maintenance instructions. Keep the architecture and measured limitations
-close to the quick start.
+A practical compatibility and startup optimization strategy for the official
+standalone Antigravity ACP server, accompanied by executable reference tooling
+and a reproducible engineering case study.
+
+The project supplies launchers, verified local preparation, dependency pins
+and engineering evidence. It does not supply a third-party ACP server build,
+implement a replacement ACP server, or redistribute a prebuilt upstream
+runtime. Users acquire the official payload and apply the strategy locally.
+The value is execution compatibility while reusing the official protocol
+implementation and matching harness.
+
+The two reference paths are full QEMU user-mode emulation and hybrid execution:
+native Python frontend + QEMU-emulated harness. The latter preserves extracted
+source bytes and the harness binary, but changes packaging and dependencies.
+That adaptation has a real compatibility and maintenance surface; describing
+it as a transparent or maintenance-free wrapper would overstate its guarantees.
 
 The chosen name, **antigravity-acp-without-avx**, states the intended use
 directly. Search wording in descriptions can include `agy_acp_server`,
 `localharness_external`, `QEMU user-mode`, `SIGILL`, `illegal instruction`,
 `no AVX`, `non-AVX CPU` and `Agent Client Protocol`.
 
-Two other viable directions:
+## Why this is distinct from an ACP adapter
 
-- **Case-study first:** a reproducible engineering investigation, with scripts
-  supporting the article. This makes a smaller compatibility promise, but
-  readers must work harder to find the operational entry point.
-- **Broader compatibility toolkit:** a framework for future CPU or packaging
-  adaptations. This offers room to grow, but would imply a wider test and
-  maintenance scope than this one pinned implementation currently supports.
+CLI-to-ACP adapters implement protocol/session/event mapping around a CLI.
+SDK-based ACP frontends implement their own ACP interface and agent
+configuration on top of an SDK. Both may still depend on native executables;
+the language of the outer adapter does not determine CPU compatibility.
+This project's reference implementation concerns the execution environment,
+while the upstream server continues to supply the ACP implementation.
 
-The practical toolkit with a detailed case study is the best fit for the
-working code and evidence available now.
+An alternative may become preferable, but assess its exact runtime version,
+permissions, system instructions, session lifecycle and complete response
+latency. Fast adapter initialization can simply defer native runtime startup
+until the first prompt. No blanket claim is made that alternatives fail on
+non-AVX hardware or behave identically to the standalone server.
+
+## Scope and retirement criteria
+
+The engineering case study supports the executable recipe, without promising
+universal legacy-CPU support or compatibility with arbitrary future releases.
+Keep the pinned baseline and validation limits close to the setup instructions.
+
+An official native release that works on the target hardware removes the
+main reason for this adaptation. A tested alternative can also supersede it
+if its behavior and performance better fit the user's requirements. Validate
+tools and permissions, restoration, cancellation and concurrent operation
+before retiring the known-working environment. Reimplementing the ACP server
+is not a project objective.
 
 ## Product boundaries and sources
 
@@ -61,8 +88,11 @@ package name.
 
 ## Claims to keep precise
 
-Use “unofficial execution compatibility wrapper,” “native Python frontend with
-an emulated harness,” and “measured on the tested configuration.”
+Use “compatibility and startup optimization strategy with reference tooling,”
+“unofficial execution compatibility layer,” “hybrid execution: native Python
+frontend + QEMU-emulated harness,” and “measured on the tested configuration.”
+Use “wrapper” for the individual launchers, not as the complete description
+of the extraction and dependency adaptation.
 Avoid “official no-AVX build,” “universal legacy CPU support,” “feature-check
 bypass,” or guaranteed speedups. Unchanged packaged source files do not make
 the altered execution environment an official supported build.

@@ -1,9 +1,14 @@
 # antigravity-acp-without-avx
 
-Run Google's standalone Antigravity ACP server on Linux x86-64 CPUs without
-AVX, using QEMU user-mode emulation. This project provides two local execution
-paths: full emulation, and a faster startup path with a native Python frontend
-and an emulated official harness.
+A practical **compatibility and startup optimization strategy, with reference
+tooling**, for running Google's **official standalone Antigravity ACP server**
+on tested Linux x86-64 CPUs without AVX.
+
+This repository documents a working approach and provides launchers, pinned
+setup tooling and engineering evidence. **It does not provide a third-party
+ACP server build:** it neither implements a separate ACP server nor distributes
+a prebuilt Antigravity runtime. Users obtain the official release from Google
+and use these tools to prepare and run it locally.
 
 **Status: private working draft.** Tested against `agy_acp_server_1.1.1`.
 The launchers and preparation recipe are ready for review. Broader portability
@@ -14,16 +19,25 @@ public release. Created and last reviewed: 2026-09-22.
 
 The target is the official `agy_acp_server.par` distribution in the
 [ACP registry](https://raw.githubusercontent.com/agentclientprotocol/registry/main/antigravity-acp/agent.json),
-together with its matching `localharness_external`. This is an execution
-compatibility wrapper for that server. It preserves the existing ACP stdio
-interface and can be selected as an external command by compatible clients.
+together with its matching `localharness_external`. The compatibility layer
+reuses that server's ACP implementation and exposes its existing stdio
+interface to compatible clients. It does not introduce its own agent harness
+or translate the `agy` CLI into ACP.
 
-The wrapper does not implement a new agent or translate the CLI into ACP.
-The optimized path runs extracted, unchanged packaged Python sources against
-pinned native dependencies; the official harness still runs through QEMU.
-Client compatibility needs its own integration test.
+Two reference execution paths demonstrate the strategy: full QEMU emulation,
+and **hybrid execution (native Python frontend + QEMU-emulated harness)**.
+The hybrid path runs extracted, unchanged packaged Python sources against
+pinned native dependencies while keeping the matching official harness
+binary unchanged under QEMU.
 
-## Two paths
+The hybrid path changes packaging and the frontend execution environment; it
+is more than a thin shell wrapper. Dependency compatibility and lifecycle
+behavior require maintenance and testing. It is an unofficial adaptation,
+not a Google-supported runtime build or a guarantee that every behavior is
+identical to the original packaged environment. Each client needs its own
+integration test.
+
+## Two reference execution paths
 
 | Path | Frontend | Harness | Main tradeoff |
 | --- | --- | --- | --- |
@@ -35,6 +49,34 @@ On one Intel Pentium Silver J5005 system, initialization fell from about
 requested model, preparing a session fell from about **61 seconds to 10 seconds**.
 These are measured startup results, not a guarantee of response speed on other
 machines. See [performance and methodology](docs/performance.md).
+
+## How this differs from other ACP projects
+
+| Approach | What it supplies | What still needs to work locally |
+| --- | --- | --- |
+| This compatibility layer | Launchers and preparation tooling around the official ACP implementation | The pinned upstream payload, native dependencies where used, and QEMU |
+| CLI-to-ACP adapter | Its own ACP implementation translating to and from a CLI | The CLI and its downstream runtime dependencies |
+| SDK-based ACP frontend | Its own ACP implementation and agent configuration on top of an SDK | The SDK and any native harness it launches |
+
+A different ACP frontend does not by itself remove a native executable's CPU
+requirements. Conversely, a newer CLI or SDK might have different hardware
+compatibility from the pinned standalone release here; assess that exact
+version rather than assuming either success or failure. Permissions, session
+restoration, cancellation, prompting and time to first useful response also
+need comparison. See [project positioning](docs/research.md).
+
+## When this approach is useful
+
+Use this approach when retaining the official standalone ACP implementation
+matters, its packaged runtime does not run on the target CPU, and the tested
+compatibility path meets your needs. The reference tooling makes the approach
+reproducible; its scope remains the pinned configuration and documented tests.
+
+The workaround can be retired when an official native release works on the
+target hardware, or a tested alternative better meets the required behavior
+and performance. Keep the old environment until the replacement passes
+permissions, tools, session restoration, cancellation and concurrency checks.
+There is no need to grow this project into another ACP server implementation.
 
 ## Requirements
 

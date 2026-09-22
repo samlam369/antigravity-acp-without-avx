@@ -7,8 +7,10 @@ open-source license; select one before public release.
 The official standalone ACP distribution is identified as proprietary in its
 [registry manifest](https://raw.githubusercontent.com/agentclientprotocol/registry/main/antigravity-acp/agent.json),
 which links to [Google's terms](https://antigravity.google/terms).
-This project contains no Google executable or extracted packaged source.
-Users acquire the official release directly and prepare their local copy.
+This project distributes authored compatibility tooling and documentation,
+not a prebuilt third-party ACP server or Antigravity runtime distribution.
+It contains no Google executable or extracted packaged source. Users acquire
+the official release directly and prepare their local execution environment.
 
 The [public Antigravity Python SDK license](https://github.com/google-antigravity/antigravity-sdk-python/blob/main/LICENSE)
 is Apache-2.0. That does not establish a license for every module and resource

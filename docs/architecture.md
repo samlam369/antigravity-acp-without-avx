@@ -1,5 +1,16 @@
 # Architecture
 
+This project implements an execution compatibility strategy around the
+official standalone ACP server. It does not implement a separate ACP server
+or publish a prebuilt third-party runtime distribution. Its reference tooling
+prepares a local execution environment from separately acquired upstream
+artifacts. The native frontend is a local extraction and environment
+adaptation, not a new implementation of the server.
+
+Inspection of the pinned 1.1.1 source shows the ACP entrypoint creating the
+packaged Python SDK Agent, whose local connection strategy directly launches
+`localharness_external`. That normal path does not first invoke the `agy` CLI.
+
 ## Execution boundary
 
 Full user-mode emulation:
@@ -12,7 +23,7 @@ ACP client
            -> qemu-x86_64 -> official localharness_external
 ```
 
-Native frontend:
+Hybrid execution: native Python frontend + QEMU-emulated harness:
 
 ```text
 ACP client
