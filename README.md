@@ -1,5 +1,98 @@
 # antigravity-acp-without-avx
 
+## In plain English (ELI5)
+
+You want to use Google's Antigravity coding agent in your editor or coding
+app, but its helper program will not start on your Linux machine. One possible
+reason: the downloaded program expects **AVX**, a set of instructions your
+processor does not understand.
+
+This project offers a way to keep using that machine. **QEMU acts like an
+interpreter for the program**, allowing it to run despite the missing CPU
+instructions. Interpreting the whole program can be slow, so the faster
+approach lets more of it run directly and keeps emulation where it is still
+needed.
+
+The target is the **official Antigravity ACP server**: the helper that connects
+Antigravity to a compatible coding app. You still obtain that software from
+Google. This repo supplies the setup tools and instructions to run it in a
+different way; it does not supply its own replacement ACP server build.
+
+### This may be useful to you if...
+
+- Antigravity fails to start on an older Linux PC, mini PC, NAS or server,
+  with an error mentioning missing AVX or an illegal instruction.
+- You already run that official helper through QEMU, but each fresh start
+  takes a long time.
+- You want to keep using the official Antigravity agent through your coding
+  app, and are willing to have a coding agent or technical helper adapt the
+  setup to your machine.
+
+Those errors are clues, not a diagnosis. The tested setup is **Linux x86-64**;
+this is not a general fix for the Antigravity desktop app, every `agy` CLI
+failure, or account/model-access problems. Your agent should check which
+program is failing and whether the CPU requirement is actually the cause.
+
+On one tested machine, getting ready to accept a prompt improved from roughly
+**one minute to ten seconds**. That is startup time, not the time to finish a
+coding task, and other machines may differ. See the
+[measurements and their limits](docs/performance.md).
+
+### Let your coding agent take it from here
+
+You do not need to choose Python versions or QEMU settings first. Give a coding
+agent access to this repository and your target machine, tell it which app you
+use and what went wrong, and let it assess the fit before adapting the setup.
+There is no universal one-click installer; the tested recipe is a starting
+point for that work.
+
+<details>
+<summary><strong>Copy a starter prompt for your coding agent</strong></summary>
+
+```text
+Please assess and, if suitable, adapt this project to my environment:
+https://github.com/samlam369/antigravity-acp-without-avx
+
+Target machine: [hostname, or "this machine"]
+Coding app/editor: [name, or "please help me identify it"]
+Problem: [paste the error or describe the startup delay]
+
+Read the README, docs/architecture.md, docs/maintenance.md,
+docs/validation.md and docs/troubleshooting.md before making changes.
+
+First inspect the target OS, architecture, visible CPU features, any VM or
+container boundary, and the executable my app actually launches. Confirm
+that this is the official standalone ACP server and that this workaround
+fits the failure. Do not assume every startup error or SIGILL means AVX.
+Check whether an official native runtime already solves the problem.
+If the documented platform or release differs, explain and validate the
+adaptation rather than applying the recipe blindly.
+
+If appropriate, prepare a separate candidate runtime using the pinned
+release, verified hashes, matching frontend/harness and dependency pins.
+Choose full QEMU or hybrid execution based on my environment and explain
+that choice. Use stable installation paths and my app's supported command
+and environment settings; preserve the current setup and a rollback path.
+
+Validate startup, authentication, a model response, tool permissions,
+bounded file operations, session restoration, independent concurrent
+sessions, cancellation and child-process cleanup. Measure startup readiness
+separately from time to first response. Switch the app only after the
+candidate passes the relevant checks, then verify the app integration.
+
+Finish with a short explanation of what changed, the measured result,
+remaining limitations, how to roll back, and what needs rechecking after
+updates. Ask me for missing access or environment details when needed.
+```
+
+</details>
+
+Prefer to work through it yourself? Continue with the
+[technical scope](#scope) and [requirements](#requirements), then
+[prepare the runtime](#prepare-the-runtime).
+
+## Technical overview
+
 A practical **compatibility and startup optimization strategy, with reference
 tooling**, for running Google's **official standalone Antigravity ACP server**
 on tested Linux x86-64 CPUs without AVX.
