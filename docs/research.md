@@ -42,6 +42,31 @@ latency. Fast adapter initialization can simply defer native runtime startup
 until the first prompt. No blanket claim is made that alternatives fail on
 non-AVX hardware or behave identically to the standalone server.
 
+## Service-access assessment
+
+Based on the implementation and upstream documentation reviewed on 2026-09-23,
+we have not identified a specific basis for concluding that this project's local
+compatibility adaptations alone introduce a Terms of Service violation. The
+adaptations retain the official standalone ACP implementation and matching
+harness, including upstream authentication and service-access code. They add no
+separate login flow, service proxy, or mechanism to bypass account entitlements
+or quotas. Full QEMU changes instruction execution; hybrid mode also changes
+frontend packaging, interpreter and dependencies. These are the technical grounds
+for our assessment, rather than a claim that the entire runtime is unchanged.
+
+Google's [terms](https://antigravity.google/terms) and
+[FAQ](https://antigravity.google/docs/faq) describe restrictions on third-party
+service access, while its
+[IDE documentation](https://antigravity.google/docs/ide/extensions) also describes
+official integrations with non-Google editors. Editor ownership alone is not
+sufficient to classify an integration. The reviewed documents do not specifically
+address QEMU execution or this hybrid adaptation. The third-party-access clause
+is broad, so the absence of a specific prohibition is not an explicit exemption.
+Our assessment concerns what this compatibility layer itself adds; it does not
+establish that every ACP client, account arrangement or use is permitted, or
+resolve all licensing questions about local extraction and adaptation. See
+[licensing boundaries](../LICENSE-NOTICE.md).
+
 ## Scope and retirement criteria
 
 The engineering case study supports the executable recipe, without promising

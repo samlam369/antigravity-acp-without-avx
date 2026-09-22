@@ -18,6 +18,11 @@ Antigravity to a compatible coding app. You still obtain that software from
 Google. This repo supplies the setup tools and instructions to run it in a
 different way; it does not supply its own replacement ACP server build.
 
+It keeps Google's own sign-in and service connection code. As far as we can
+tell, running the official ACP server through this compatibility layer does
+not itself break Google's terms; see
+[our reasoning and its limits](docs/research.md#service-access-assessment).
+
 ### This may be useful to you if...
 
 - Antigravity fails to start on an older Linux PC, mini PC, NAS or server,
@@ -190,6 +195,18 @@ behavior require maintenance and testing. It is an unofficial adaptation,
 not a Google-supported runtime build or a guarantee that every behavior is
 identical to the original packaged environment. Each client needs its own
 integration test.
+
+> [!NOTE]
+> This layer adapts local execution of the official ACP implementation, retaining
+> upstream authentication and service-access code. It adds no separate login flow,
+> service proxy, or mechanism to bypass account entitlements or quotas.
+> Based on the implementation and upstream documentation reviewed on 2026-09-23,
+> we have not identified a specific basis for concluding that these local
+> compatibility adaptations alone introduce a Terms of Service violation.
+> This is our assessment, not an explicit Google approval of QEMU or hybrid mode;
+> it does not extend to arbitrary clients or uses of the service. See the
+> [assessment and sources](docs/research.md#service-access-assessment) and
+> [licensing boundaries](LICENSE-NOTICE.md).
 
 ## Two reference execution paths
 
