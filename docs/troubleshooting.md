@@ -24,6 +24,45 @@ It does not disable a startup check. An error from the IDE's language server
 or the standalone `agy` CLI concerns a different executable; verify the scope
 before applying this recipe.
 
+## Error evidence and provenance
+
+The [README error guide](../README.md#startup-errors-and-what-they-mean)
+separates reproduced failures, source-defined messages and client summaries.
+The evidence was reviewed on 2026-09-22:
+
+- **Packaged frontend:** retained native-start stderr from the official Linux
+  x86-64 ACP 1.1.1 `agy_acp_server.par` contains the complete AVX fail-fast
+  diagnostic quoted in the README. The tested Intel Pentium Silver J5005 has
+  no AVX flag. The exact payload hashes and download URL are in the
+  [release manifest](../manifests/agy-acp-1.1.1-linux-x86_64.json).
+- **Matching harness:** a native `localharness_external --help` probe returned
+  `-4` with empty stdout/stderr. Under QEMU it reached its usage output instead.
+  On POSIX, [Python records signal termination as a negative return code](https://docs.python.org/3/library/subprocess.html#subprocess.Popen.returncode);
+  here `-4` represents `SIGILL`. An x86-64 Linux shell can instead report status
+  132 (128 + signal 4). No individual harness instruction was identified;
+  an empty stderr must not be described as a second captured AVX diagnostic.
+- **Bundled SDK source:** the four README harness-error prefixes occur in
+  `google/antigravity/connections/local/local_connection.py` extracted from
+  that pinned PAR. In this version, the relevant lines are 1243 (initial
+  handshake), 1196 (WebSocket connection), 1290 (conversation initialization)
+  and 533 (unexpected WebSocket closure). These are possible error paths,
+  not four independently reproduced AVX failures. Dynamic addresses, close
+  codes and stderr are deliberately omitted from the listed prefixes.
+- **Client summary:** the downloaded-runtime message was verified in a
+  consuming client's installation-verification error handler. It wraps a
+  failed check and is not an upstream server diagnostic.
+- **Related public evidence:** [SDK issue 147](https://github.com/google-antigravity/antigravity-sdk-python/issues/147)
+  reports the AVX fail-fast message in SDK 0.1.7. This corroborates the symptom
+  in a related component; it does not establish standalone ACP build flags,
+  the precise harness instruction, or compatibility of other releases.
+
+To investigate a matching report, retain the exact command, release/hash,
+platform, visible CPU flags, stderr and exit/signal status. Read a client's
+underlying process error rather than relying only on its install-failed banner.
+For a handshake or WebSocket error, inspect the harness failure before changing
+CPU settings: the same error path can also reflect non-CPU problems. Keep raw
+logs private when they contain account information, tokens or project paths.
+
 ## Initialization is still slow
 
 Confirm that the client selected `agy-acp-native`, and that

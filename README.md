@@ -28,9 +28,10 @@ different way; it does not supply its own replacement ACP server build.
   app, and are willing to have a coding agent or technical helper adapt the
   setup to your machine.
 
-Those errors are clues, not a diagnosis. The tested setup is **Linux x86-64**;
-this is not a general fix for the Antigravity desktop app, every `agy` CLI
-failure, or account/model-access problems. Your agent should check which
+See [startup errors and what they mean](#startup-errors-and-what-they-mean)
+for exact messages. These are clues, not a diagnosis. The tested setup is
+**Linux x86-64**; this is not a general fix for the Antigravity desktop app,
+every `agy` CLI failure, or account/model-access problems. Your agent should check which
 program is failing and whether the CPU requirement is actually the cause.
 
 On one tested machine, getting ready to accept a prompt improved from roughly
@@ -90,6 +91,66 @@ updates. Ask me for missing access or environment details when needed.
 Prefer to work through it yourself? Continue with the
 [technical scope](#scope) and [requirements](#requirements), then
 [prepare the runtime](#prepare-the-runtime).
+
+## Startup errors and what they mean
+
+If you found this project by searching an Antigravity error, compare the
+message **and the executable that produced it**. The examples below distinguish
+an observed CPU-feature failure from more general symptoms.
+
+### Confirmed AVX startup failure
+
+The official Linux x86-64 `agy_acp_server.par` from release **1.1.1** produced
+this exact message on our tested non-AVX machine:
+
+```text
+FATAL ERROR: This binary was compiled with avx enabled, but this feature is not available on this processor (go/sigill-fail-fast).
+```
+
+This is the failure the tested compatibility path addresses. The matching
+`localharness_external` also terminated with **SIGILL** when run natively;
+that probe captured no stderr, so it did not identify the particular failing
+instruction. See [the evidence and its limits](docs/troubleshooting.md#error-evidence-and-provenance).
+A [related upstream SDK report](https://github.com/google-antigravity/antigravity-sdk-python/issues/147)
+contains the same AVX diagnostic, but concerns an SDK wheel, not this exact
+standalone ACP release.
+
+### Other ways the failure may appear
+
+A shell or process supervisor may report **`SIGILL`**, **`Illegal instruction`**,
+**`Illegal instruction (core dumped)`**, or **exit status 132**. Our Python
+probe recorded return code **`-4`** for the harness. These are ways to report
+an illegal-instruction signal on Linux x86-64, not proof that AVX is the cause;
+the exact wording depends on the caller.
+
+The Python SDK code bundled inside the official ACP 1.1.1 release also
+contains these error prefixes. They are **source-confirmed possibilities**,
+not additional failures reproduced in our AVX test:
+
+| Searchable message prefix | What it tells you |
+| --- | --- |
+| `Failed to read length from stdout. Stderr:` | The harness supplied no initial handshake header. Check its stderr and termination signal. |
+| `Failed to connect to WebSocket at` | The frontend could not establish its local connection to the harness. Inspect the appended endpoint, retry count and stderr. |
+| `Failed to initialize conversation at` | Conversation initialization failed over that local connection; inspect the underlying exception and stderr. |
+| `Harness process exited unexpectedly (WS close code` | The frontend saw an unexpected WebSocket closure. The message alone does not establish why the harness stopped or disconnected. |
+
+A consuming app may instead show this generic installation/check error:
+
+```text
+The downloaded Antigravity runtime could not start in this environment.
+```
+
+That message comes from the **client**, not the official ACP server's stderr.
+It does not identify a CPU requirement. Obtain the underlying runtime error
+before choosing this workaround.
+
+For any generic symptom above, first check the actual executable, release,
+CPU features and stderr using the [troubleshooting guide](docs/troubleshooting.md).
+Missing files, permissions, local networking and other crashes can produce
+similar failures. Errors from the desktop IDE or `agy` CLI concern different
+executables; this recipe does not establish compatibility for those products.
+You can give the error and this repo to your agent using the
+[starter prompt above](#let-your-coding-agent-take-it-from-here).
 
 ## Technical overview
 
