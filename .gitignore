@@ -1,0 +1,25 @@
+# Acquired payloads and generated environments
+/runtime/
+/artifacts/
+/validation/
+/scratch/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.zip
+*.par
+*.so
+*.so.*
+*.whl
+*.deb
+# Local runtime configuration, state and diagnostics
+.env
+.env.*
+*.local.*
+*.log
+*.log.*
+*.jsonl
+settings.json
+conversations/
+credentials/

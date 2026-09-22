@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "upstream_version": "agy_acp_server_1.1.1",
+  "registry_version": "1.1.1",
+  "platform": "linux-x86_64",
+  "registry_url": "https://raw.githubusercontent.com/agentclientprotocol/registry/main/antigravity-acp/agent.json",
+  "archive": {
+    "url": "https://dl.google.com/agy-extensions/releases/linux/agy-acp-server-agy_acp_server_1.1.1-linux-x86_64.zip",
+    "sha256": "38f62d01b32deb0907b3d39a71ec301fd36369f6ffd1cf262d4af385177f79df"
+  },
+  "files": {
+    "agy_acp_server.par": {
+      "sha256": "267affa691085fe5d78895e34dffe723d6528713e01bd37ed40feb7b43d1f4c7",
+      "bytes": 1880360328
+    },
+    "localharness_external": {
+      "sha256": "d98770b161eb3cc37ae4fa17f088285f9b6ac75c7cb53e0d90ed5077def9d69a",
+      "bytes": 128966920
+    }
+  },
+  "digest_provenance": "Locally measured from the official download; not an upstream signed checksum.",
+  "checked_date": "2026-09-22"
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Native Python frontend; only the official native harness uses QEMU.
+set -eu
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+: "${AGY_RUNTIME_DIR:=$project_dir/runtime}"
+: "${AGY_QEMU:=qemu-x86_64}"
+: "${AGY_QEMU_CPU:=max}"
+AGY_RUNTIME_DIR=$(CDPATH= cd -- "$AGY_RUNTIME_DIR" && pwd)
+case "$AGY_QEMU" in
+  /*) ;;
+  */*) printf "%s\n" "AGY_QEMU must be an executable name or absolute path" >&2; exit 2 ;;
+esac
+export AGY_RUNTIME_DIR AGY_QEMU AGY_QEMU_CPU
+export ANTIGRAVITY_HARNESS_PATH="$project_dir/bin/localharness-qemu"
+exec "$AGY_RUNTIME_DIR/native/venv/bin/python3" -u "$project_dir/scripts/bootstrap.py" "$@"
