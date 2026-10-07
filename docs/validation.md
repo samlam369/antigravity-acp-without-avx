@@ -1,43 +1,50 @@
 # Validation record
 
+The native frontend passed model, tool, session and cancellation checks on
+one Linux x86-64 setup. Functional checks used a separately configured
+deployment. The portable launchers have narrower test coverage, detailed below.
+
 ## Dependency security update on 2026-10-07
 
-The requirements now pin oauthlib 4.0.0 and PyJWT 2.15.0, preserving every
-other version including protobuf 6.33.6. Python 3.13 dependency resolution
-passed with all 57 packages. The complete list was freshly installed and
-validated in a separate native frontend environment on the documented J5005
-setup with the official ACP/harness 1.1.1 pair.
+The update pins oauthlib 4.0.0 and PyJWT 2.15.0. All other versions remain
+unchanged, including protobuf 6.33.6. Python 3.13 dependency resolution passed
+for all 57 packages. The full list was freshly installed in a separate native
+frontend environment on the documented J5005 setup, with official ACP/harness
+1.1.1.
 
-These tests passed `pip check`, existing-account authentication,
-model replies, exact-command scratch-file write/read/delete, fresh-process
-session restoration, two independent concurrent sessions, streaming and
-running-tool cancellation, recovery and observed child cleanup. T3 Code
-0.0.45 reported the new provider ready/authenticated and passed parallel
-diagnostic replies and cancellation/recovery without a service restart.
-Synthetic security checks covered both PyJWT advisories, JSONP removal and
-constant-time PKCE comparisons. OAuth client PKCE/token exchange/refresh was
-also checked with mocked token responses. Fresh interactive login and a
-forced real Google token refresh were not tested.
+| Check | Result |
+| --- | --- |
+| Dependency consistency | `pip check` passed |
+| Existing-account authentication and model replies | Passed |
+| Scratch-file write/read/delete with exact-command permissions | Passed |
+| Session restoration in a fresh process | Passed |
+| Two independent concurrent sessions | Passed |
+| Streaming and running-tool cancellation | Cancellation, recovery and observed child cleanup passed |
+| T3 Code 0.0.45 integration | Provider ready/authenticated; parallel diagnostic replies and cancellation/recovery passed without a service restart |
+| Synthetic security checks | Both PyJWT advisories, JSONP removal and constant-time PKCE comparisons covered |
+| OAuth client PKCE, token exchange and refresh | Passed with mocked token responses |
+| Manual sign-out/sign-in through T3 Code | Reported successful on the existing test deployment |
 
-Later on 2026-10-07, a tester reported a successful manual T3 sign-out/sign-in.
-The test deployment then passed natural Gemini 3.8 Flash High coding
-tasks through T3: file search/read/edit, shell commands, one-time permissions,
-bug fixing, seven passing tests, CSV/JSON reports and Git review. Stopping and
-resuming the same thread preserved tool operation, and cancellation of an
-observed running shell child cleaned it up and allowed a subsequent read.
-These additional checks did not exercise browser/MCP tools or force a real
-Google token refresh.
+The other authentication checks used existing account state or mocked token
+responses. A forced real Google token refresh was not tested.
 
-All eight preparation/launcher tests in this repository passed. The functional
-results were obtained using a separately configured native frontend; the
-portable launcher was not separately exercised with a newly prepared runtime
-in this checkout. Historical timings below are not measurements of the new
-pins, and this update does not patch dependencies embedded in full-QEMU mode.
+The test deployment also passed Gemini 3.8 Flash High coding tasks through T3:
+file search/read/edit, shell commands, one-time permissions, bug fixing, seven
+passing tests, CSV/JSON reports and Git review. Stopping and resuming the same
+thread preserved tool operation. Cancelling an observed running shell child
+removed it and allowed a subsequent read. These checks did not cover browser
+or MCP tools, or force a real Google token refresh.
+
+All eight repository preparation/launcher tests passed. Functional checks used
+the separately configured native frontend; the portable launcher was not tested
+with a newly prepared runtime in this checkout. Historical timings below do
+not measure these new pins. This update does not patch the dependencies
+embedded in full-QEMU mode.
 
 ## Historical validation
 
-The optimized execution boundary was tested directly through ACP on the
-pinned Linux x86-64 setup described in [performance.md](performance.md).
+Direct ACP checks used the pinned Linux x86-64 setup described in
+[performance.md](performance.md).
 
 | Direct ACP exercise | Observed result |
 | --- | --- |
@@ -52,35 +59,45 @@ pinned Linux x86-64 setup described in [performance.md](performance.md).
 | Cancel a bounded running child command | Cancellation worked and child absence was checked |
 | Continue after cancellation while the other process remains active | Both sessions remained usable |
 
-These are two independently launched ACP processes, not proof of arbitrary
-concurrent calls on one shared SDK Agent or one harness. No shared-harness
-pool is implemented.
+Concurrency checks used two independently launched ACP processes. They do not
+establish support for arbitrary concurrent calls on one SDK Agent or harness.
+This project has no shared-harness pool.
 
-The pre-existing deployment provided this lifecycle evidence. The general
-portable launchers in this repository were additionally checked with
-initialize-only execution against the same pinned payload, without changing
-an active client. Preparation tests check hashes, archive path handling,
-duplicate mappings, refusal to overwrite and argument forwarding.
+These functional results came from the pre-existing deployment. The portable
+launchers were checked separately against the same pinned payload, through
+initialize only, without changing an active client.
 
 ## Portable launcher checks on 2026-09-22
 
-- Native launcher initialize: **3.179 seconds**.
-- Full-QEMU launcher initialize: **44.706 seconds**.
-- Both reported protocol version 1 and `agy_acp_server_1.1.1`.
-- Both pinned executable hashes matched; a new extraction produced 776 files.
-- Native execution reused the already validated pinned virtual environment;
-  this was **not** a fresh package installation or a clean-machine rebuild.
-- Source extraction was isolated and bytecode writes disabled. Processes were
-  stopped after initialize; no model prompt or new authentication was requested.
-- Eight focused local tests passed, plus Python compilation and shell syntax
-  checks. The tests exercise preparation and launcher boundaries, not the
-  upstream model service.
+| Check | Result |
+| --- | --- |
+| Native launcher initialize | **3.179 seconds** |
+| Full-QEMU launcher initialize | **44.706 seconds** |
+| Protocol and server version, both paths | Protocol version 1; `agy_acp_server_1.1.1` |
+| Payload verification | Both executable hashes matched; a new extraction produced 776 files |
+| Local checks | Eight focused tests, Python compilation and shell syntax checks passed |
 
-The remaining validation scope includes interactive fresh sign-in, browser
-workflows, arbitrary external tool integrations, long-running sessions, other
-Linux distributions and Python/QEMU versions, and each consuming client's own
-process lifecycle. A successful initialize handshake alone is not equivalent
-to validating all of those behaviors.
+Native execution reused the validated pinned virtual environment. This was
+**not a fresh package installation or a clean-machine rebuild**. Source
+extraction was isolated and bytecode writes were disabled. Both processes
+stopped after initialize; no model prompt or new authentication was requested.
 
-No account state, conversation content or raw execution traces are distributed
-with this repository.
+The local tests cover preparation and launcher boundaries: hashes, archive
+paths, duplicate mappings, refusal to overwrite and argument forwarding.
+They do not exercise the upstream model service.
+
+## Remaining validation
+
+The manual T3 Code sign-out/sign-in result covers that deployment. It does not
+establish fresh sign-in on a clean-machine build of the portable runtime.
+Other gaps include:
+
+- A forced real Google token refresh.
+- Browser workflows, MCP tools and arbitrary external tool integrations.
+- Long-running sessions.
+- Other Linux distributions and Python/QEMU versions.
+- Each consuming client's process lifecycle beyond the checks recorded here.
+
+An initialize handshake alone does not validate these behaviors. This
+repository distributes no account state, conversation content or raw
+execution traces.

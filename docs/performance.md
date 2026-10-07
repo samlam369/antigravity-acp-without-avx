@@ -1,8 +1,12 @@
 # Startup measurements
 
-Measured on 2026-09-22 using an Intel Pentium Silver J5005 without AVX, Linux
-x86-64 in a container, QEMU 10.0.13 (`-cpu max`), official ACP 1.1.1,
-and native CPython 3.13.5. These are local case-study results.
+On one tested non-AVX machine, hybrid mode reduced prompt readiness from about
+**61 seconds to 10 seconds**. This combines native Python execution with a
+matching default model. It measures startup, not model response speed.
+
+Measured on 2026-09-22: Intel Pentium Silver J5005 without AVX, Linux x86-64
+in a container, QEMU 10.0.13 (`-cpu max`), official ACP 1.1.1 and native
+CPython 3.13.5. These are local case-study results.
 
 ## Direct ACP startup
 
@@ -14,33 +18,35 @@ and native CPython 3.13.5. These are local case-study results.
 | Select intended model | 6.376 | 0.002 |
 | Approximately ready to submit prompt | 61 | 10 |
 
-Native initialization across the exploratory runs was 2.4–3.3 seconds.
-The native row above is the final dependency pin, including protobuf 6.33.6.
-The requested model was `gemini-3.8-flash-high`; only the native comparison
-aligned `AGY_ACP_DEFAULT_MODEL` to it. Therefore the total improvement combines
-two changes: native frontend execution and avoiding a redundant harness launch.
+Native initialization took 2.4–3.3 seconds across the exploratory runs.
+The native results use the final dependency pin from those runs, including
+protobuf 6.33.6. These timings predate the 2026-10-07 dependency update in
+[validation.md](validation.md#dependency-security-update-on-2026-10-07).
 
-These timings end at prompt readiness. They do not measure client rendering,
-time to first text, or completion of a coding task. Runs used fresh processes,
-not a cleared operating-system cache. This was a small sequential experiment,
-not a controlled statistical benchmark.
+The requested model was `gemini-3.8-flash-high`. Only the native comparison
+set `AGY_ACP_DEFAULT_MODEL` to that model, avoiding a second harness launch.
+The total improvement therefore cannot be attributed to native execution alone.
+
+Runs used fresh processes without clearing the operating-system cache. This
+was a small sequential experiment, not a controlled statistical benchmark.
+It did not measure client rendering, time to first text or coding-task completion.
 
 ## What the original initialization was doing
 
-The 45.104-second initialization consumed approximately 45.10 CPU seconds,
-consistent with roughly one busy CPU core. Main-thread runqueue wait near
-the end of that phase was only 0.043 seconds. Actual storage reads were about
-123 kB, while most logical reads were satisfied from cache.
+The 45.104-second initialization used about 45.10 CPU seconds: roughly one
+busy CPU core. Main-thread runqueue wait near the end was only 0.043 seconds.
+Actual storage reads were about 123 kB; most logical reads came from cache.
 
-Import profiling recorded substantial Python data-model initialization:
-`acp.schema` self time was 10.864 seconds and `google.genai.types` was
-7.796 seconds. The full run accumulated 39.31 seconds of self import time,
-including some imports after initialization; that number is not an exact
-initialize-only subtotal.
+Import profiling showed substantial Python data-model initialization:
 
-The visible container CPU quota was unlimited and recorded no CPU throttling.
+- `acp.schema`: 10.864 seconds of self import time.
+- `google.genai.types`: 7.796 seconds of self import time.
+- Profiled run: 39.31 seconds of self import time, including some imports
+  after initialization. This is not an initialize-only subtotal.
+
+The container's visible CPU quota was unlimited, with no recorded throttling.
 These observations support CPU-bound frontend initialization. They do not
-exclude every host scheduler, frequency or hardware effect.
+rule out every host scheduler, frequency or hardware effect.
 
 ## Other options explored
 
@@ -48,21 +54,23 @@ exclude every host scheduler, frequency or hardware effect.
 | --- | --- |
 | Larger QEMU translation cache, 512 MiB | 47.898-second initialization; no improvement in this sample |
 | Mask selected fast-string CPU hints | 46.682 seconds; no improvement in this sample |
-| Start the ACP process before its first initialize request | Request response became quick, but expensive startup had already happened |
+| Start the ACP process before its first initialize request | The request returned quickly, but expensive startup had already happened |
 | Start a harness before its handshake | Handshake changed from 3.236 seconds cold to 0.070 seconds prestarted |
 
-The last two approaches move work earlier. A dependable spare-process service
-would add ownership, cancellation, replenishment and cleanup complexity.
-This project implements neither. The native frontend removes much of the
-actual emulated work without introducing a daemon.
+The last two options move work earlier. A spare-process service would also need
+ownership, cancellation, replenishment and cleanup rules. This project does
+not implement either option. Native execution removes much of the frontend's
+emulated work without adding a daemon.
 
-## What is not established
+## Limits
 
-- No guarantee of faster warm tool turns; model and network waiting still vary.
-- No portable speedup factor for other processors, kernels or QEMU versions.
-- No claim that all missing CPU features or every legacy x86-64 CPU are supported.
-- No claim that multiple simultaneous cold starts have the same latency as one.
-- No quantitative split between CPU hardware differences and QEMU overhead.
+These results do not establish:
 
-The remaining harness is still emulated. Use the measurements to understand
-the startup mechanism, then measure your own complete client workflow.
+- Faster warm tool turns; model and network waiting still vary.
+- The same speedup on other processors, kernels or QEMU versions.
+- Support for every missing CPU feature or legacy x86-64 CPU.
+- The same latency for multiple simultaneous cold starts.
+- A quantitative split between CPU hardware differences and QEMU overhead.
+
+The harness still runs under QEMU. Measure your complete client workflow on
+your own machine.

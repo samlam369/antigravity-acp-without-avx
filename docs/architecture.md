@@ -1,19 +1,18 @@
 # Architecture
 
-This project implements an execution compatibility strategy around the
-official standalone ACP server. It does not implement a separate ACP server
-or publish a prebuilt third-party runtime distribution. Its reference tooling
-prepares a local execution environment from separately acquired upstream
-artifacts. The native frontend is a local extraction and environment
-adaptation, not a new implementation of the server.
+This project runs Google's official standalone Antigravity ACP server on
+tested Linux x86-64 hardware without AVX. Its tools prepare a local runtime
+from files you download from Google. It does not provide a replacement ACP
+server or a prebuilt runtime.
 
-Inspection of the pinned 1.1.1 source shows the ACP entrypoint creating the
-packaged Python SDK Agent, whose local connection strategy directly launches
-`localharness_external`. That normal path does not first invoke the `agy` CLI.
+The server has two parts: a Python frontend that talks to the ACP client,
+and the `localharness_external` executable that runs the agent. In the pinned
+1.1.1 source, the frontend creates the packaged Python SDK Agent, which
+launches the harness directly. This path does not first run the `agy` CLI.
 
 ## Execution boundary
 
-Full user-mode emulation:
+Full QEMU mode runs both parts under emulation:
 
 ```text
 ACP client
@@ -23,7 +22,8 @@ ACP client
            -> qemu-x86_64 -> official localharness_external
 ```
 
-Hybrid execution: native Python frontend + QEMU-emulated harness:
+Hybrid mode runs the Python frontend directly on the host. Only the harness
+uses QEMU:
 
 ```text
 ACP client
@@ -33,55 +33,52 @@ ACP client
            -> qemu-x86_64 -> official localharness_external
 ```
 
-QEMU user-mode translates application instructions and interfaces with the
-host kernel. There is no guest firmware, guest operating-system boot, virtual
-disk or VM service in either path.
-[QEMU user-mode documentation](https://www.qemu.org/docs/master/user/main.html)
-
-The CPU still lacks AVX. Emulation supplies the execution capability required
-by the proprietary harness. Removing a feature check would not implement the
-missing instructions.
+[QEMU user-mode](https://www.qemu.org/docs/master/user/main.html) translates
+the program's instructions and uses the host kernel. Neither path boots a
+guest operating system or needs guest firmware, a virtual disk or a VM service.
+The CPU still lacks AVX; QEMU emulates the instructions the harness needs.
+Removing a CPU feature check would not supply those instructions.
 
 ## What the native path changes
 
-The pinned PAR is also readable as a ZIP archive. The preparation script
-copies selected `.py` files and resources, preserving each file's bytes.
-It maps the packaged `google/antigravity` and `acp` modules to native import
-paths. Packaged shared objects, Python bytecode and the hermetic Python
-interpreter are not reused.
+The pinned `agy_acp_server.par` can also be read as a ZIP archive. The
+preparation script copies selected `.py` files and resources without changing
+their bytes. It puts the copied `google/antigravity` and `acp` modules on paths
+native Python can import. It does not reuse the packaged shared
+libraries, Python bytecode or bundled Python interpreter.
 
-A dedicated native Python virtual environment supplies public dependencies.
-The bootstrap applies the protobuf version-validation shim already present in
-the official entrypoint before generated internal modules are imported. It
-also filters the exact empty `--uid=` launcher argument. It does not rewrite
-the packaged session, permission or model-selection implementations.
+A dedicated Python virtual environment supplies the public dependencies.
+Before loading generated internal modules, the bootstrap applies the same
+protobuf version-check override as the official entrypoint. It also removes
+the exact empty launcher argument `--uid=`. The packaged session, permission
+and model-selection code stays unchanged.
 
-The wrapper selects the harness through `ANTIGRAVITY_HARNESS_PATH`. The helper
-executes the matching original harness through QEMU. Launchers use `exec`,
-preserving the process-facing stdio and termination behavior as far as the
-underlying programs permit. There is one ordinary launch per client process;
-no pool, broker or cross-session harness sharing is introduced.
+The wrapper sets `ANTIGRAVITY_HARNESS_PATH` to `localharness-qemu`, which runs
+the matching original harness through QEMU. The launchers use `exec` to keep
+stdio and termination behavior as close to the underlying programs as possible.
+Each client process gets its own launch. There is no process pool, broker or
+shared harness across sessions.
 
 ## Why startup improves
 
-Importing Python modules executes code: classes, data schemas and runtime
-objects are built again in every fresh process. Running this work on native
-CPython removes most of the frontend's emulation overhead. It does not make
-the remaining harness native or remove model-service waiting.
+Every fresh Python process builds classes, data schemas and other objects
+when it imports modules. Native CPython does this work without QEMU's
+emulation overhead. The harness still needs emulation, and requests still
+wait for the model service.
 
-The upstream default-model setting is a separate optimization. If a client
-creates a session using the server default and then selects a different model,
-the pinned implementation replaces its agent/harness. Aligning the initial
-default with the intended selection avoids that second startup.
+The upstream default-model setting saves another startup. In the pinned
+release, creating a session with the default model and then selecting a
+different model replaces the agent and harness. Setting the initial default
+to the intended model avoids that second launch.
 
 ## Compatibility surface
 
-The upstream ACP server and its matching harness remain version 1.1.1.
-The executable packaging and frontend dependency environment change. Matching
-the version is necessary but does not guarantee every behavior is identical.
+The official ACP server and harness remain version 1.1.1. Hybrid mode changes
+how the frontend is packaged and which dependencies it uses. Keeping the
+server and harness versions matched does not guarantee identical behavior.
 
-The boundary exposed to clients is standard ACP over stdio, not a
-client-specific internal API. A client upgrade can still change arguments,
-environment, protocol expectations or process lifecycle; perform a smoke test
-after upgrading a client. An upstream ACP upgrade requires a deliberate
-payload/dependency refresh and broader tests.
+Clients use standard ACP over stdio. A client update can change arguments,
+environment variables, protocol expectations or how processes start and stop.
+Run an integration smoke test after updating a client. For an official ACP
+upgrade, refresh the matching files and dependencies, then run the broader
+checks in [maintenance and upgrades](maintenance.md).

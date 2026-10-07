@@ -1,8 +1,7 @@
 # Licensing and component boundaries
 
 The license for this project's original scripts and documentation has not yet
-been selected. This private draft does not currently grant a general
-open-source license; select one before public release.
+been selected. Public visibility does not grant a general open-source license.
 
 The official standalone ACP distribution is identified as proprietary in its
 [registry manifest](https://raw.githubusercontent.com/agentclientprotocol/registry/main/antigravity-acp/agent.json),
