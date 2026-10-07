@@ -1,5 +1,41 @@
 # Validation record
 
+## Dependency security update on 2026-10-07
+
+The requirements now pin oauthlib 4.0.0 and PyJWT 2.15.0, preserving every
+other version including protobuf 6.33.6. Python 3.13 dependency resolution
+passed with all 57 packages. The complete list was freshly installed and
+validated in a separate native frontend environment on the documented J5005
+setup with the official ACP/harness 1.1.1 pair.
+
+These tests passed `pip check`, existing-account authentication,
+model replies, exact-command scratch-file write/read/delete, fresh-process
+session restoration, two independent concurrent sessions, streaming and
+running-tool cancellation, recovery and observed child cleanup. T3 Code
+0.0.45 reported the new provider ready/authenticated and passed parallel
+diagnostic replies and cancellation/recovery without a service restart.
+Synthetic security checks covered both PyJWT advisories, JSONP removal and
+constant-time PKCE comparisons. OAuth client PKCE/token exchange/refresh was
+also checked with mocked token responses. Fresh interactive login and a
+forced real Google token refresh were not tested.
+
+Later on 2026-10-07, a tester reported a successful manual T3 sign-out/sign-in.
+The test deployment then passed natural Gemini 3.8 Flash High coding
+tasks through T3: file search/read/edit, shell commands, one-time permissions,
+bug fixing, seven passing tests, CSV/JSON reports and Git review. Stopping and
+resuming the same thread preserved tool operation, and cancellation of an
+observed running shell child cleaned it up and allowed a subsequent read.
+These additional checks did not exercise browser/MCP tools or force a real
+Google token refresh.
+
+All eight preparation/launcher tests in this repository passed. The functional
+results were obtained using a separately configured native frontend; the
+portable launcher was not separately exercised with a newly prepared runtime
+in this checkout. Historical timings below are not measurements of the new
+pins, and this update does not patch dependencies embedded in full-QEMU mode.
+
+## Historical validation
+
 The optimized execution boundary was tested directly through ACP on the
 pinned Linux x86-64 setup described in [performance.md](performance.md).
 

@@ -172,7 +172,7 @@ and use these tools to prepare and run it locally.
 **Status: private working draft.** Tested against `agy_acp_server_1.1.1`.
 The launchers and preparation recipe are ready for review. Broader portability
 testing and a license choice for this project's original work remain before
-public release. Created and last reviewed: 2026-09-22.
+public release. Created: 2026-09-22. Last reviewed: 2026-10-07.
 
 ## Scope
 
@@ -195,6 +195,32 @@ behavior require maintenance and testing. It is an unofficial adaptation,
 not a Google-supported runtime build or a guarantee that every behavior is
 identical to the original packaged environment. Each client needs its own
 integration test.
+
+### Native dependency versions
+
+Hybrid mode supplies public Python packages pinned in
+[requirements.txt](requirements.txt). The current pins for these two libraries
+are newer than the versions declared by their bundled source in the official
+Linux x86-64 `agy_acp_server_1.1.1` PAR:
+
+| Library | Version declared by bundled source | Native frontend pin |
+| --- | --- | --- |
+| oauthlib | 2.0.7 | 4.0.0 |
+| PyJWT (`jwt`) | 2.13.0 | 2.15.0 |
+
+The bundled values were read from the libraries' `__version__` fields under
+`google3/third_party/py/` on 2026-10-07. These fields identify the bundled
+source; they do not establish equivalence to public packages with the same
+version number.
+
+The native pins address published security advisories and were tested with
+the official ACP/harness 1.1.1 pair in a separate native frontend environment;
+see [the validation scope](docs/validation.md#dependency-security-update-on-2026-10-07).
+Google's frontend OAuth implementation and matching harness remain unchanged.
+The original PAR, including the full-QEMU path, retains its bundled libraries.
+Rebuild existing native environments to apply changed pins. For a new official
+ACP release, reassess the dependencies and repeat functional validation before
+switching runtimes; see [maintenance and upgrades](docs/maintenance.md).
 
 > [!NOTE]
 > This layer adapts local execution of the official ACP implementation, retaining

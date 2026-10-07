@@ -17,6 +17,18 @@ The current dependency pin uses protobuf 6.33.6. An exploratory run with
 packaged loader uses the removed `FieldDescriptor.label` API. This is why
 testing only `initialize` is insufficient.
 
+On 2026-10-07, oauthlib was pinned to 4.0.0 and PyJWT to 2.15.0 to address
+GHSA-hj66-6f7g-4r5v, GHSA-xpv3-w29h-x7cv, GHSA-42vr-xj54-vc7v and
+GHSA-x33g-cr3x-6449. The remaining pins were preserved. Validation used the
+full 57-package list in a fresh Python 3.13.5 venv with a separately configured
+native frontend. Checks covered model replies, session restoration, independent
+concurrent sessions, bounded file operations, cancellation/recovery and T3 Code
+0.0.45 integration. See
+[the validation scope](validation.md#dependency-security-update-on-2026-10-07).
+Rebuild existing native venvs to apply these fixes; updating this file alone
+does not update an installed environment. Full-QEMU mode retains its separately
+packaged dependencies and is not patched by these public Python pins.
+
 ## Reproduce a runtime
 
 1. Obtain the official archive named by the manifest.
