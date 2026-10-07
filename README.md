@@ -108,8 +108,9 @@ for concluding that these local changes alone violate Google's terms. This
 is our assessment, not Google approval; see its
 [scope and limits](docs/research.md#service-access-assessment).
 
-A license for this repo's original work has **not yet been selected**. Public
-visibility does not grant an open-source license. See [component licenses](LICENSE-NOTICE.md).
+Original scripts and documentation are licensed under [MIT](LICENSE).
+Third-party components retain their own licenses.
+See [component notices](LICENSE-NOTICE.md).
 
 ## Documentation
 

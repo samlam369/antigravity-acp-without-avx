@@ -91,7 +91,7 @@ files, but the client still needs them.
 
 ## Release checklist
 
-- Choose a license for original work and review component notices and references.
+- Review component notices, licenses and references.
 - Rebuild from the documented recipe and verify the compatibility matrix.
 - Check tracked files for machine-specific configuration or downloaded runtime files.
 - Keep the release experimental until independent installations are tested.
